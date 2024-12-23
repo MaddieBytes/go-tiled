@@ -54,7 +54,7 @@ type RendererEngine interface {
 	Init(m *tiled.Map)
 	GetFinalImageSize() image.Rectangle
 	RotateTileImage(tile *tiled.LayerTile, img image.Image) image.Image
-	GetTilePosition(x, y int) image.Rectangle
+	GetTilePosition(x, y, width, height int) image.Rectangle
 }
 
 // Renderer represents an rendering engine.
@@ -76,6 +76,8 @@ func NewRendererWithFileSystem(m *tiled.Map, fs fs.FS) (*Renderer, error) {
 	r := &Renderer{m: m, tileCache: make(map[uint32]image.Image), fs: fs}
 	if r.m.Orientation == "orthogonal" {
 		r.engine = &OrthogonalRendererEngine{}
+	} else if r.m.Orientation == "isometric" {
+		r.engine = &IsometricRendererEngine{}
 	} else {
 		return nil, ErrUnsupportedOrientation
 	}
@@ -165,7 +167,7 @@ func (r *Renderer) _renderLayer(layer *tiled.Layer) error {
 				return err
 			}
 
-			pos := r.engine.GetTilePosition(x, y)
+			pos := r.engine.GetTilePosition(x, y, img.Bounds().Dx(), img.Bounds().Dy())
 
 			if layer.Opacity < 1 {
 				mask := image.NewUniform(color.Alpha{uint8(layer.Opacity * 255)})

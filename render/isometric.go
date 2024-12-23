@@ -29,23 +29,32 @@ import (
 	tiled "github.com/lafriks/go-tiled"
 )
 
-// OrthogonalRendererEngine represents orthogonal rendering engine.
-type OrthogonalRendererEngine struct {
+// IsometricRendererEngine represents isometric rendering engine.
+type IsometricRendererEngine struct {
 	m *tiled.Map
 }
 
 // Init initializes rendering engine with provided map options.
-func (e *OrthogonalRendererEngine) Init(m *tiled.Map) {
+func (e *IsometricRendererEngine) Init(m *tiled.Map) {
 	e.m = m
 }
 
 // GetFinalImageSize returns final image size based on map data.
-func (e *OrthogonalRendererEngine) GetFinalImageSize() image.Rectangle {
-	return image.Rect(0, 0, e.m.Width*e.m.TileWidth, e.m.Height*e.m.TileHeight)
+func (e *IsometricRendererEngine) GetFinalImageSize() image.Rectangle {
+	// In isometric rendering, the width and height will be different due to the staggered tile arrangement.
+	// The final image width is affected by the number of tiles in x direction and the tile width.
+	// The height will be affected by the number of tiles in y direction and the tile height.
+	// width := (e.m.Width * e.m.TileWidth)
+	// height := (e.m.Height * e.m.TileHeight)
+
+	// return image.Rect(0, 0, width, height)
+
+	return image.Rect(0, 0, e.m.Width*32, e.m.Height*32)
+
 }
 
 // RotateTileImage rotates provided tile layer.
-func (e *OrthogonalRendererEngine) RotateTileImage(tile *tiled.LayerTile, img image.Image) image.Image {
+func (e *IsometricRendererEngine) RotateTileImage(tile *tiled.LayerTile, img image.Image) image.Image {
 	timg := img
 	if tile.HorizontalFlip {
 		timg = imaging.FlipH(timg)
@@ -61,9 +70,16 @@ func (e *OrthogonalRendererEngine) RotateTileImage(tile *tiled.LayerTile, img im
 }
 
 // GetTilePosition returns tile position in image.
-func (e *OrthogonalRendererEngine) GetTilePosition(x, y, width, height int) image.Rectangle {
-	return image.Rect(x*width,
-		y*height,
-		(x+1)*width,
-		(y+1)*height)
+func (e *IsometricRendererEngine) GetTilePosition(x, y, width, height int) image.Rectangle {
+	// In isometric rendering, the formula is adjusted based on the tile's position in the isometric grid
+	// screenX := (x - y) * e.m.TileWidth / 2
+	// screenY := (x + y) * e.m.TileHeight / 2
+	screenX := (x - y) * width / 2
+	screenY := (x + y) * height / 4
+
+	// Return a rectangle representing the tile's position and size in the final image
+	// return image.Rect(screenX, screenY, screenX+e.m.TileWidth, screenY+e.m.TileHeight)
+	// return image.Rect(screenX, screenY, screenX+32, screenY+32)
+
+	return image.Rect(screenX, screenY, screenX+width, screenY+height)
 }
